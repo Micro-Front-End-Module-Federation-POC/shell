@@ -1,0 +1,304 @@
+<!-- ── Hero ──────────────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero__badge">Module Federation POC</div>
+  <h1 class="hero__title">Micro Frontend Architecture <span class="hero__poc">POC</span></h1>
+  <p class="hero__subtitle">
+    Independently deployable Angular applications composed at runtime using
+    Webpack 5 Module Federation — with shared state, shared libraries, and CI/CD per team.
+  </p>
+  <div class="hero__actions">
+    <a routerLink="/demo" class="hero__cta">View Live Demo</a>
+    <a routerLink="/how-to-implement" class="hero__cta hero__cta--outline">How It Works</a>
+  </div>
+</section>
+
+<!-- ── What is Micro Frontend ─────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">What is Micro Frontend Architecture?</h2>
+  <p class="home-section__lead">
+    Micro Frontends extend the concept of microservices to the frontend layer. Instead of
+    one large Angular app, the UI is split into smaller, independently developed, tested,
+    and deployed applications each owned by a separate team.
+  </p>
+  <div class="mfe-cards">
+    <div class="mfe-card mfe-card--mono">
+      <h4>&#128250; Monolith</h4>
+      <p>One Angular project. All features developed and deployed together. A single broken build blocks everyone.</p>
+      <div class="mfe-card__tag mfe-card__tag--bad">Tight coupling</div>
+    </div>
+    <div class="mfe-card__arrow">&#8594;</div>
+    <div class="mfe-card mfe-card--mfe">
+      <h4>&#129695; Micro Frontends</h4>
+      <p>Multiple Angular apps. Each team ships independently. Composed at runtime in the browser.</p>
+      <div class="mfe-card__tag mfe-card__tag--good">Loose coupling</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── POC Architecture ───────────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">Architecture of This POC</h2>
+  <p class="home-section__lead">
+    Three separate Angular projects, each with its own build pipeline and deployment. The
+    Shell discovers remotes at runtime via a JSON manifest — no rebuild needed when remotes change.
+  </p>
+  <div class="arch">
+    <div class="arch__box arch__box--shell">
+      <div class="arch__box-icon">&#127968;</div>
+      <strong>Shell (Host)</strong>
+      <span>Port 4200</span>
+      <ul>
+        <li>Owns routing &amp; layout</li>
+        <li>Loads manifest at startup</li>
+        <li>Renders remote components via lazy routes</li>
+        <li>Shows fallback if remote fails</li>
+      </ul>
+    </div>
+    <div class="arch__connector">
+      <span>loads remoteEntry.js</span>
+      <span>loads remoteEntry.js</span>
+    </div>
+    <div class="arch__remotes">
+      <div class="arch__box arch__box--products">
+        <div class="arch__box-icon">&#128230;</div>
+        <strong>MFE Products</strong>
+        <span>Port 4201</span>
+        <ul>
+          <li>Exposes <code>./Component</code></li>
+          <li>Reads &amp; writes shared cart state</li>
+          <li>Deployable independently</li>
+        </ul>
+      </div>
+      <div class="arch__box arch__box--cart">
+        <div class="arch__box-icon">&#128722;</div>
+        <strong>MFE Cart</strong>
+        <span>Port 4202</span>
+        <ul>
+          <li>Exposes <code>./Component</code></li>
+          <li>Reads shared cart state</li>
+          <li>Deployable independently</li>
+        </ul>
+      </div>
+    </div>
+    <div class="arch__shared">
+      <div class="arch__box arch__box--lib">
+        <div class="arch__box-icon">&#128274;</div>
+        <strong>Shared State Library</strong>
+        <span>npm package · singleton</span>
+        <ul>
+          <li>Published to GitHub Packages</li>
+          <li>One <code>BehaviorSubject</code> instance across all MFEs</li>
+          <li>Auto-versioned &amp; published via CI</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it flows ───────────────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">How It Works at Runtime</h2>
+  <div class="flow">
+    <div class="flow__step">
+      <span class="flow__num">1</span>
+      <div>
+        <strong>Shell boots</strong>
+        <p>Fetches <code>module-federation.manifest.json</code> to discover remote URLs (environment-aware: localhost vs GitHub Pages).</p>
+      </div>
+    </div>
+    <div class="flow__step">
+      <span class="flow__num">2</span>
+      <div>
+        <strong>User navigates to a remote route</strong>
+        <p>Angular's router calls <code>loadRemoteModule()</code>. Webpack fetches the remote's <code>remoteEntry.js</code>.</p>
+      </div>
+    </div>
+    <div class="flow__step">
+      <span class="flow__num">3</span>
+      <div>
+        <strong>Webpack negotiates shared scope</strong>
+        <p>Angular, RxJS, and the shared library are loaded only once.</p>
+      </div>
+    </div>
+    <div class="flow__step">
+      <span class="flow__num">4</span>
+      <div>
+        <strong>Remote component renders inside Shell</strong>
+        <p>The remote's root component is injected into the Shell's <code>&lt;router-outlet&gt;</code> as if it were a local component.</p>
+      </div>
+    </div>
+    <div class="flow__step">
+      <span class="flow__num">5</span>
+      <div>
+        <strong>State flows via shared singleton</strong>
+        <p>Products writes to <code>SharedStateService</code>. Cart and Shell's navbar react instantly — same <code>BehaviorSubject</code> instance in memory.</p>
+      </div>
+    </div>
+    <div class="flow__step flow__step--fallback">
+      <span class="flow__num flow__num--warn">!</span>
+      <div>
+        <strong>Remote fails to load → Fallback</strong>
+        <p>If <code>remoteEntry.js</code> is unreachable, the <code>.catch()</code> handler renders a local fallback component. Shell stays fully functional.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Benefits ───────────────────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">Key Benefits</h2>
+  <div class="benefits">
+    <div class="benefit">
+      <span class="benefit__icon">&#128640;</span>
+      <strong>Independent Deployments</strong>
+      <p>Each team can release on their own cadence without coordinating with others.</p>
+    </div>
+    <div class="benefit">
+      <span class="benefit__icon">&#128736;</span>
+      <strong>Team Autonomy</strong>
+      <p>Teams own their MFE end-to-end  codebase, CI, deploy, and rollback.</p>
+    </div>
+    <div class="benefit">
+      <span class="benefit__icon">&#128737;</span>
+      <strong>Fault Isolation</strong>
+      <p>One remote crashing does not bring down the entire application.</p>
+    </div>
+    <div class="benefit">
+      <span class="benefit__icon">&#128260;</span>
+      <strong>Incremental Upgrades</strong>
+      <p>Upgrade one MFE to a newer Angular version without touching others.</p>
+    </div>
+    <div class="benefit">
+      <span class="benefit__icon">&#9889;</span>
+      <strong>Smaller Bundles per Team</strong>
+      <p>Each team's build is scoped to their feature , making faster CI and focused bundle analysis.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tech Stack ─────────────────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">Tech Stack Used in This POC</h2>
+  <div class="stack">
+    <div class="stack__item">
+      <span>&#9889;</span>
+      <div>
+        <strong>Angular 21</strong>
+        <span>Standalone components, Signals, computed</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#128268;</span>
+      <div>
+        <strong>Webpack 5 Module Federation</strong>
+        <span>via @angular-architects/module-federation</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#128230;</span>
+      <div>
+        <strong>ng-packagr</strong>
+        <span>Builds the shared Angular library</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#128274;</span>
+      <div>
+        <strong>GitHub Packages</strong>
+        <span>Private npm registry for the shared library</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#9881;</span>
+      <div>
+        <strong>GitHub Actions</strong>
+        <span>CI/CD — auto publish library, auto deploy all MFEs</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#127760;</span>
+      <div>
+        <strong>GitHub Pages</strong>
+        <span>Hosts Shell, MFE Products and MFE Cart independently</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#128200;</span>
+      <div>
+        <strong>RxJS BehaviorSubject</strong>
+        <span>Singleton cross-MFE state channel</span>
+      </div>
+    </div>
+    <div class="stack__item">
+      <span>&#127912;</span>
+      <div>
+        <strong>SCSS</strong>
+        <span>Scoped styles per MFE — no global CSS leakage</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── When to use / avoid ────────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">When to Use Micro Frontends</h2>
+  <div class="use-grid">
+    <div class="use-col use-col--yes">
+      <h4>&#9989; Good Fit</h4>
+      <ul>
+        <li>Large org with multiple independent teams</li>
+        <li>Different release cadences per domain</li>
+        <li>Need to run A/B experiments on isolated sections</li>
+        <li>Gradual migration from a legacy app</li>
+        <li>Different tech stacks per team (React + Angular)</li>
+      </ul>
+    </div>
+    <div class="use-col use-col--no">
+      <h4>&#10060; Poor Fit</h4>
+      <ul>
+        <li>Small team (< 5 devs) — overhead outweighs benefits</li>
+        <li>Tight feature coupling across all sections</li>
+        <li>No established CI/CD pipeline</li>
+        <li>Performance-critical app where bundle overhead matters</li>
+        <li>Short-lived prototype or MVP</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ── Component cards ────────────────────────────────────────────────────── -->
+<section class="home-section">
+  <h2 class="home-section__title">POC Components</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="card__icon">&#127968;</div>
+      <h3 class="card__title">Shell (Host)</h3>
+      <p class="card__desc">Owns layout, navbar, routing. Loads manifest at startup to discover remotes. Shows cart badge synced via shared state.</p>
+      <div class="card__meta">Port 4200 &bull; Host</div>
+    </div>
+    <div class="card">
+      <div class="card__icon">&#128230;</div>
+      <h3 class="card__title">MFE Products</h3>
+      <p class="card__desc">Displays course catalogue. Add/remove from cart writes to the shared singleton. Independently deployable.</p>
+      <div class="card__meta">Port 4201 &bull; Remote</div>
+    </div>
+    <div class="card">
+      <div class="card__icon">&#128722;</div>
+      <h3 class="card__title">MFE Cart</h3>
+      <p class="card__desc">Reads cart state from the shared singleton. Shows order summary, discount, and checkout navigation.</p>
+      <div class="card__meta">Port 4202 &bull; Remote</div>
+    </div>
+    <div class="card">
+      <div class="card__icon">&#128274;</div>
+      <h3 class="card__title">Shared Library</h3>
+      <p class="card__desc">Angular library published to GitHub Packages. Provides a BehaviorSubject singleton across all remotes via Webpack shared scope.</p>
+      <div class="card__meta">npm package &bull; Singleton</div>
+    </div>
+    <div class="card card--fallback">
+      <div class="card__icon">&#9888;</div>
+      <h3 class="card__title">MFE Checkout</h3>
+      <p class="card__desc">Intentionally not deployed. Demonstrates graceful degradation — Shell catches the load failure and renders a local fallback instead of crashing.</p>
+      <div class="card__meta">Not deployed &bull; Fallback demo</div>
+    </div>
+  </div>
+</section>

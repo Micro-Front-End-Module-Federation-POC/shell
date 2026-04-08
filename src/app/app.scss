@@ -1,23 +1,121 @@
-:host {
-    border-color: red;
-    border-width: 2px;
-    border-style: solid;
-    display: block;
-    color: red;
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.display-center {
+// ── Navbar ────────────────────────────────────────────────────────────────────
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 64px;
+  background: #1a1a2e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  &__brand {
     display: flex;
-    justify-content: center;
     align-items: center;
-    font-size: 24px;
-    font-weight: bold;
-    justify-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  &__logo {
+    font-size: 28px;
+    color: #e94560;
+  }
+
+  &__title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 1px;
+  }
+
+  &__nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #a8b2d8;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+
+    &:hover {
+      background: rgba(233, 69, 96, 0.15);
+      color: #ffffff;
+    }
+
+    &--active {
+      background: #e94560;
+      color: #ffffff !important;
+    }
+  }
+
+  &__link-icon {
+    font-size: 16px;
+  }
+
+  &__cart {
+    display: flex;
+    align-items: center;
+  }
 }
 
-a {
-    margin: 10px;
-    text-decoration: none;
-    color: blue;
-    font-size: 18px;
+// ── Cart Badge ────────────────────────────────────────────────────────────────
+.cart-badge {
+  position: relative;
+  font-size: 26px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s;
+
+  &:hover { transform: scale(1.12); }
+
+  &__count {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background: #e94560;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+}
+
+// ── Main Content ──────────────────────────────────────────────────────────────
+.shell__content {
+  flex: 1;
+  padding: 32px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+// ── Footer ────────────────────────────────────────────────────────────────────
+.footer {
+  background: #1a1a2e;
+  color: #a8b2d8;
+  text-align: center;
+  padding: 16px 32px;
+  font-size: 13px;
 }

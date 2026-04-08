@@ -1,0 +1,237 @@
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+.demo__hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.demo__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(233, 69, 96, 0.2);
+  color: #e94560;
+  border: 1px solid #e94560;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #e94560;
+    border-radius: 50%;
+    animation: blink 1.4s infinite;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.demo__title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.demo__subtitle {
+  font-size: 14px;
+  color: #a8b2d8;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 420px;
+
+  strong { color: #fff; }
+}
+
+.demo__hero-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.demo__stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 16px;
+
+  &-icon { font-size: 22px; }
+
+  div {
+    display: flex;
+    flex-direction: column;
+
+    strong {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    span {
+      font-size: 11px;
+      color: #a8b2d8;
+    }
+  }
+}
+
+.demo__connector {
+  color: #e94560;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.demo__stat-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #a8b2d8;
+  font-size: 14px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+}
+
+.demo__stat--offline {
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(251, 191, 36, 0.08);
+  position: relative;
+
+  .demo__stat-icon { color: #f59e0b; }
+}
+
+.demo__stat-badge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #f59e0b;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: absolute;
+  top: -8px;
+  right: 8px;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+.demo__tabs {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  padding: 8px 8px 0;
+  border: 1px solid #eaedf3;
+  border-bottom: none;
+}
+
+.demo__tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border-radius: 8px 8px 0 0;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+  bottom: -1px;
+
+  &:hover {
+    background: #f4f6f9;
+    color: #1a1a2e;
+  }
+
+  &--active {
+    background: #f4f6f9;
+    color: #e94560;
+    border-color: #eaedf3;
+    border-bottom-color: #f4f6f9;
+  }
+
+  &--fallback {
+    color: #92400e;
+
+    &:hover { color: #92400e; background: #fef3c7; }
+    &.demo__tab--active { color: #92400e; border-color: #fde68a; border-bottom-color: #f4f6f9; background: #fffbeb; }
+  }
+}
+
+.demo__tab-ext {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  color: #64748b;
+  font-size: 11px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1;
+
+  &:hover {
+    background: #e94560;
+    color: #fff;
+  }
+}
+
+.demo__tab-pill {
+  font-size: 9px;
+  font-weight: 700;
+  background: #f59e0b;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+// ── Content ───────────────────────────────────────────────────────────────────
+.demo__content {
+  background: #f4f6f9;
+  border: 1px solid #eaedf3;
+  border-radius: 0 0 12px 12px;
+  padding: 24px;
+  min-height: 400px;
+}

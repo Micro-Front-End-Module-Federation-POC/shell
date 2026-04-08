@@ -1,37 +1,25 @@
-import { loadRemoteModule } from '@angular-architects/module-federation';
 import { Routes } from '@angular/router';
-import { Fallback } from './fallback/fallback';
+import { Home } from './home/home';
+import { HowToImplement } from './how-to-implement/how-to-implement';
+import { Demo } from './demo/demo';
 
 export const routes: Routes = [
   {
-    path: 'products',
-    loadComponent: () =>
-      loadRemoteModule({
-        type: 'manifest',
-        remoteName: 'mfe-products',
-        exposedModule: './Component',
-      }).then(m => m.App).catch(() => Fallback),
+    path: '',
+    component: Home,
+    pathMatch: 'full',
   },
   {
-    path: 'cart',
-    loadComponent: () =>
-      loadRemoteModule({
-        type: 'manifest',
-        remoteName: 'mfe-cart',
-        exposedModule: './Component',
-      }).then(m => m.App).catch(() => Fallback),
+    path: 'how-to-implement',
+    loadComponent: () => import('./how-to-implement/how-to-implement').then(m => m.HowToImplement),
   },
   {
-    path: 'checkout',
-    loadComponent: () =>
-      loadRemoteModule({
-        type: 'manifest',
-        remoteName: 'mfe-checkout',
-        exposedModule: './Component',
-      }).then(m => m.App).catch(() => Fallback),
+    path: 'demo',
+    loadComponent: () => import('./demo/demo').then(m => m.Demo),
+    loadChildren: () => import('./demo/demo.routes').then(m => m.routes),
   },
   {
     path: '**',
-    redirectTo: 'products',
+    redirectTo: '',
   }
 ];

@@ -1,10 +1,38 @@
-<div class="display-center"> SHELL COMPONENT</div>
-<div class="display-center">Cart Count: {{ sharedStateValue()?.cartCount }}</div>
+<div class="shell">
 
-<nav>
-    <a routerLink="/products">Products</a>
-    <a routerLink="/cart">Cart</a>
-    <a routerLink="/checkout">Checkout</a>
-</nav>
+  <header class="navbar">
+    <div class="navbar__brand">
+      <span class="navbar__logo">&#9711;</span>
+      <span class="navbar__title">MFE Shop</span>
+    </div>
 
-<router-outlet></router-outlet>
+    <nav class="navbar__nav">
+      <a routerLink="/" routerLinkActive="navbar__link--active" [routerLinkActiveOptions]="{exact:true}"
+        class="navbar__link">
+        <span class="navbar__link-icon">&#127968;</span> Home
+      </a>
+      <a routerLink="/how-to-implement" routerLinkActive="navbar__link--active" class="navbar__link">
+        <span class="navbar__link-icon">&#128214;</span> How to Implement
+      </a>
+      <a routerLink="/demo" routerLinkActive="navbar__link--active" class="navbar__link">
+        <span class="navbar__link-icon">&#127981;</span> View Demo
+      </a>
+    </nav>
+
+    <div class="navbar__cart">
+      <a routerLink="/demo/cart" class="cart-badge" title="Go to Cart">
+        &#128722;
+        <span class="cart-badge__count">{{ sharedStateValue() ?? 0 }}</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="shell__content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer">
+    <p>MFE Shop &copy; 2025 &mdash; Built with Angular Module Federation</p>
+  </footer>
+
+</div>

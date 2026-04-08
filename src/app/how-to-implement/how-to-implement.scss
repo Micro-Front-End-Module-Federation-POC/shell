@@ -1,0 +1,307 @@
+// ── Page Layout ───────────────────────────────────────────────────────────────
+.guide {
+  margin: 0 auto;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+.guide__header {
+  text-align: center;
+  padding: 48px 24px 40px;
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  border-radius: 16px;
+  margin-bottom: 40px;
+  color: #fff;
+}
+
+.guide__badge {
+  display: inline-block;
+  background: rgba(233, 69, 96, 0.2);
+  color: #e94560;
+  border: 1px solid #e94560;
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.guide__title {
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #fff, #a8b2d8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.guide__subtitle {
+  color: #a8b2d8;
+  font-size: 16px;
+  margin-bottom: 28px;
+}
+
+.guide__toc {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.guide__toc-link {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  color: #a8b2d8;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.2s, color 0.2s;
+
+  &:hover {
+    background: #e94560;
+    color: #fff;
+    border-color: #e94560;
+  }
+}
+
+// ── Section ───────────────────────────────────────────────────────────────────
+.guide-section {
+  margin-bottom: 48px;
+  scroll-margin-top: 80px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #eaedf3;
+
+    h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin: 0;
+    }
+  }
+
+  &__num {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    background: #e94560;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+}
+
+// ── Theory Box ────────────────────────────────────────────────────────────────
+.theory-box {
+  background: #f0f4ff;
+  border-left: 4px solid #0f3460;
+  border-radius: 0 10px 10px 0;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f3460;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.75;
+    margin: 0;
+
+    code {
+      background: #dce4f5;
+      color: #0f3460;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    strong {
+      color: #1a1a2e;
+    }
+  }
+}
+
+// ── Note Box ──────────────────────────────────────────────────────────────────
+.note-box {
+  background: #fff8e1;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 10px 10px 0;
+  padding: 14px 18px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.7;
+  margin-top: 16px;
+
+  strong {
+    color: #92400e;
+  }
+
+  code {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+}
+
+// ── Command Blocks ────────────────────────────────────────────────────────────
+.cmd-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 20px 0 10px;
+}
+
+.cmd-block {
+  background: #0d1117;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+
+  &__label {
+    background: #161b22;
+    color: #8b949e;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid #21262d;
+    font-family: monospace;
+  }
+
+  pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+  }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    color: #e6edf3;
+    line-height: 1.8;
+    white-space: pre;
+  }
+}
+
+// ── Pitfalls ──────────────────────────────────────────────────────────────────
+.pitfall-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pitfall {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #fecdd3;
+  overflow: hidden;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff1f2;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #9f1239;
+  }
+
+  &__icon { font-size: 18px; flex-shrink: 0; }
+
+  &__body {
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    p {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.65;
+      margin: 0;
+
+      strong { color: #0f172a; }
+    }
+
+    pre {
+      margin: 0;
+      background: #0d1117;
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+
+      code {
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 12.5px;
+        color: #e6edf3;
+        line-height: 1.7;
+        white-space: pre;
+      }
+    }
+  }
+}
+
+// ── Q&A ───────────────────────────────────────────────────────────────────────
+.qa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qa {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eaedf3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+
+  &__q {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+
+    &::before { content: 'Q  '; color: #e94560; font-weight: 800; }
+  }
+
+  &__a {
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #444;
+    line-height: 1.8;
+
+    strong {
+      color: #1a1a2e;
+    }
+
+    code {
+      background: #eef0f7;
+      color: #e94560;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  }
+}

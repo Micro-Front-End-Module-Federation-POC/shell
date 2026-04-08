@@ -1,1 +1,132 @@
-<div> Fallback Content :  Micro Front End is not available</div>
+@if (isIntentional()) {
+
+  <!-- ── Intentional Fallback: mfe-checkout not deployed ──────────────────── -->
+  <div class="fallback fallback--intentional">
+
+    <div class="fallback__badge-row">
+      <span class="fallback__badge fallback__badge--demo">Intentional Demo</span>
+      <span class="fallback__badge fallback__badge--mfe">{{ mfeName() }}</span>
+    </div>
+
+    <div class="fallback__icon-wrap fallback__icon-wrap--intentional">
+      <span class="fallback__icon">&#9888;</span>
+    </div>
+
+    <h2 class="fallback__title">Checkout MFE — Not Deployed</h2>
+    <p class="fallback__desc">
+      This is <strong>intentional</strong>. The <code>mfe-checkout</code> remote is listed in the
+      Module Federation manifest but has never been deployed. When the shell tries to load it at
+      runtime, the network request for <code>remoteEntry.js</code> fails — and the
+      <code>.catch()</code> handler kicks in, rendering this component instead.
+    </p>
+
+    <div class="fallback__how">
+      <h3 class="fallback__how-title">How the Fallback Works</h3>
+      <div class="fallback__steps">
+        <div class="fallback__step">
+          <span class="fallback__step-num">1</span>
+          <div>
+            <strong>Shell navigates to <code>/demo/checkout</code></strong>
+            <p>Angular lazy-loads the route by calling <code>loadRemoteModule()</code> with <code>remoteName: 'mfe-checkout'</code>.</p>
+          </div>
+        </div>
+        <div class="fallback__step">
+          <span class="fallback__step-num">2</span>
+          <div>
+            <strong>Webpack fetches <code>remoteEntry.js</code></strong>
+            <p>Module Federation reads the manifest to find the remote URL, then makes a network request for the entry file.</p>
+          </div>
+        </div>
+        <div class="fallback__step">
+          <span class="fallback__step-num">3</span>
+          <div>
+            <strong>Network request fails (404 / unreachable host)</strong>
+            <p>The remote is not deployed, so the fetch throws an error and the Promise rejects.</p>
+          </div>
+        </div>
+        <div class="fallback__step">
+          <span class="fallback__step-num">4</span>
+          <div>
+            <strong><code>.catch(() =&gt; Fallback)</code> in <code>demo.routes.ts</code></strong>
+            <p>Instead of crashing the entire shell, the catch handler returns the local <code>Fallback</code> component — keeping the host app fully functional.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fallback__code">
+      <div class="fallback__code-label">demo.routes.ts — fallback pattern</div>
+      <pre class="fallback__pre"><code>{{'{'}}
+  path: 'checkout',
+  loadComponent: () =&gt;
+    loadRemoteModule({{'{'}}
+      type: 'manifest',
+      remoteName: 'mfe-checkout',
+      exposedModule: './Component',
+    {{'}'}}).then(m =&gt; m.App)
+      .catch(() =&gt; Fallback),  // ← graceful degradation
+{{'}'}}</code></pre>
+    </div>
+
+    <div class="fallback__why">
+      <h3 class="fallback__why-title">Why This Matters</h3>
+      <div class="fallback__why-grid">
+        <div class="fallback__why-card">
+          <span>&#128737;</span>
+          <strong>Resilience</strong>
+          <p>One MFE going down does not take the entire platform offline.</p>
+        </div>
+        <div class="fallback__why-card">
+          <span>&#128260;</span>
+          <strong>Independent Deploys</strong>
+          <p>Teams can release on their own cadence — the shell handles the rest.</p>
+        </div>
+        <div class="fallback__why-card">
+          <span>&#128065;</span>
+          <strong>UX Continuity</strong>
+          <p>Users see a meaningful message instead of a blank screen or JS error.</p>
+        </div>
+        <div class="fallback__why-card">
+          <span>&#128295;</span>
+          <strong>Dev Isolation</strong>
+          <p>Other teams can develop and test locally without needing checkout running.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+} @else {
+
+  <!-- ── Generic Fallback: unexpected MFE load failure ──────────────────── -->
+  <div class="fallback fallback--error">
+
+    <div class="fallback__badge-row">
+      <span class="fallback__badge fallback__badge--error">Load Error</span>
+      <span class="fallback__badge fallback__badge--mfe">{{ mfeName() }}</span>
+    </div>
+
+    <div class="fallback__icon-wrap fallback__icon-wrap--error">
+      <span class="fallback__icon">&#10060;</span>
+    </div>
+
+    <h2 class="fallback__title">Remote MFE Could Not Be Loaded</h2>
+    <p class="fallback__desc">
+      <code>{{ mfeName() }}</code> failed to load at runtime — the remote entry could not be
+      fetched. This is the <strong>graceful degradation</strong> pattern in action: the shell
+      caught the error and rendered this fallback instead of crashing.
+    </p>
+
+    <div class="fallback__checklist">
+      <h3 class="fallback__how-title">Things to Check</h3>
+      <ul>
+        <li>Is the remote app deployed and reachable?</li>
+        <li>Does the manifest URL for <code>{{ mfeName() }}</code> point to the correct host?</li>
+        <li>Is the remote serving <code>remoteEntry.js</code> on the expected path?</li>
+        <li>Are CORS headers set correctly on the remote server?</li>
+      </ul>
+    </div>
+
+  </div>
+
+}

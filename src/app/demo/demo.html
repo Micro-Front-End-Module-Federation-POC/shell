@@ -1,0 +1,97 @@
+<div class="demo">
+
+  <div class="demo__hero">
+    <div class="demo__hero-left">
+      <span class="demo__badge">Live POC</span>
+      <h2 class="demo__title">Education E-Commerce</h2>
+      <p class="demo__subtitle">
+        Each section below is an <strong>independently deployed</strong> micro frontend loaded at runtime.
+        Cart state is shared instantly via <strong>SharedStateService</strong>.
+      </p>
+    </div>
+    <div class="demo__hero-right">
+
+      <div class="demo__stat">
+        <span class="demo__stat-icon">&#127968;</span>
+        <div>
+          <strong>Shell</strong>
+          <span>Host Application</span>
+        </div>
+      </div>
+
+      <div class="demo__connector">&#8594;</div>
+
+      <div class="demo__stat">
+        <span class="demo__stat-icon">&#128230;</span>
+        <div>
+          <strong>MFE Products</strong>
+          <span>Remote App</span>
+        </div>
+        <a class="demo__stat-link"
+           [href]="productsUrl"
+           target="_blank" rel="noopener" title="Open standalone app">
+          &#8599;
+        </a>
+      </div>
+
+      <div class="demo__connector">+</div>
+
+      <div class="demo__stat">
+        <span class="demo__stat-icon">&#128722;</span>
+        <div>
+          <strong>MFE Cart</strong>
+          <span>Remote App</span>
+        </div>
+        <a class="demo__stat-link"
+           [href]="cartUrl"
+           target="_blank" rel="noopener" title="Open standalone app">
+          &#8599;
+        </a>
+      </div>
+
+      <div class="demo__connector">+</div>
+
+      <div class="demo__stat demo__stat--offline">
+        <span class="demo__stat-icon">&#9888;</span>
+        <div>
+          <strong>MFE Checkout</strong>
+          <span>Not Deployed</span>
+        </div>
+        <span class="demo__stat-badge">Fallback</span>
+      </div>
+
+    </div>
+  </div>
+
+  <nav class="demo__tabs">
+    <a routerLink="products" routerLinkActive="demo__tab--active" class="demo__tab">
+      <span>&#128230;</span> Products
+      <a class="demo__tab-ext"
+         [href]="productsUrl"
+         target="_blank" rel="noopener"
+         title="Open standalone app"
+         (click)="$event.stopPropagation()">
+        &#8599;
+      </a>
+    </a>
+    <a routerLink="cart" routerLinkActive="demo__tab--active" class="demo__tab">
+      <span>&#128722;</span> Cart
+      <a class="demo__tab-ext"
+         [href]="cartUrl"
+         target="_blank" rel="noopener"
+         title="Open standalone app"
+         (click)="$event.stopPropagation()">
+        &#8599;
+      </a>
+    </a>
+    <a routerLink="checkout" routerLinkActive="demo__tab--active" class="demo__tab demo__tab--fallback">
+      <span>&#9888;</span> Checkout
+      <span class="demo__tab-pill">Fallback Demo</span>
+    </a>
+  </nav>
+
+  <div class="demo__content">
+    <router-outlet></router-outlet>
+  </div>
+
+</div>

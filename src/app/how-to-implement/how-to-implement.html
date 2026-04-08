@@ -1,0 +1,736 @@
+<div class="guide">
+
+  <!-- Header -->
+  <div class="guide__header">
+    <div class="guide__badge">Study Guide</div>
+    <h1 class="guide__title">How to Implement Module Federation</h1>
+    <p class="guide__subtitle">All commands, concepts, pitfalls, and interview answers — in one place.</p>
+    <div class="guide__toc">
+      <button class="guide__toc-link" (click)="scrollTo('setup')">1. Project Setup</button>
+      <button class="guide__toc-link" (click)="scrollTo('shared-lib')">2. Shared Library</button>
+      <button class="guide__toc-link" (click)="scrollTo('mf-config')">3. MF Configuration</button>
+      <button class="guide__toc-link" (click)="scrollTo('state')">4. Shared State</button>
+      <button class="guide__toc-link" (click)="scrollTo('deploy')">5. Deployment</button>
+      <button class="guide__toc-link" (click)="scrollTo('pitfalls')">6. Common Pitfalls</button>
+      <button class="guide__toc-link" (click)="scrollTo('interview')">7. Interview Q&A</button>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="guide-section" id="setup">
+    <div class="guide-section__header">
+      <span class="guide-section__num">01</span>
+      <h2>Project Setup</h2>
+    </div>
+
+    <div class="theory-box">
+      <h4>&#128218; Theory</h4>
+      <p>
+        This POC is built using <strong>Angular CLI</strong> without any monorepo tool like Nx. Each application is a completely standalone Angular project with its own
+        <code>package.json</code>, <code>node_modules</code>, and build pipeline. They are developed,
+        versioned, and deployed independently, and integrated <strong>only at runtime</strong> via
+        Webpack Module Federation. This approach demonstrates that you do not need a monorepo to
+        implement Micro Frontends — Angular CLI alone is sufficient.
+      </p>
+    </div>
+
+    <h4 class="cmd-title">Create each app separately</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">terminal</div>
+      <pre><code>ng new shell --routing --style=scss
+ng new mfe-products --routing --style=scss
+ng new mfe-cart --routing --style=scss</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Add Module Federation to each app</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">terminal</div>
+      <pre><code># Shell becomes the HOST
+ng add &#64;angular-architects/module-federation --type=host --port=4200
+
+# Remotes are configured as REMOTE
+ng add &#64;angular-architects/module-federation --type=remote --port=4201
+ng add &#64;angular-architects/module-federation --type=remote --port=4202</code></pre>
+    </div>
+
+    <div class="note-box">
+      &#128161; <strong>What this does:</strong> Generates <code>webpack.config.js</code>, updates <code>angular.json</code>
+      to use <code>ngx-build-plus:browser</code> instead of the default Angular builder, and creates
+      <code>bootstrap.ts</code> with a dynamic import to defer Angular's bootstrap until Webpack has
+      negotiated all shared modules.
+    </div>
+
+    <h4 class="cmd-title">Environment files (for manifest URL switching)</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">src/environments/environment.ts</div>
+      <pre><code>export const environment = &#123;
+  production: false,
+  manifestPath: '/module-federation.manifest.json'
+&#125;;</code></pre>
+    </div>
+    <div class="cmd-block">
+      <div class="cmd-block__label">src/environments/environment.prod.ts</div>
+      <pre><code>export const environment = &#123;
+  production: true,
+  manifestPath: '/shell/module-federation.manifest.prod.json'
+&#125;;</code></pre>
+    </div>
+    <div class="cmd-block">
+      <div class="cmd-block__label">angular.json — fileReplacements in production config</div>
+      <pre><code>"fileReplacements": [
+  &#123;
+    "replace": "src/environments/environment.ts",
+    "with":    "src/environments/environment.prod.ts"
+  &#125;
+]</code></pre>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="guide-section" id="shared-lib">
+    <div class="guide-section__header">
+      <span class="guide-section__num">02</span>
+      <h2>Shared Library</h2>
+    </div>
+
+    <div class="theory-box">
+      <h4>&#128218; Theory</h4>
+      <p>
+        A shared library is a separately built and published Angular library consumed by all MFEs
+        as an npm package. It avoids duplicating common code. When configured as <code>singleton: true</code>
+        in the Webpack shared scope, only one instance is loaded at runtime enabling true cross-MFE
+        state sharing via a single <code>BehaviorSubject</code>.
+      </p>
+    </div>
+
+    <h4 class="cmd-title">Create the library workspace</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">terminal</div>
+      <pre><code>ng new shared-state-lib --no-create-application
+cd shared-state-lib
+ng generate library shared-state --prefix=mfe</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Service inside the library</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">projects/shared-state/src/lib/shared-state.service.ts</div>
+      <pre><code>export interface Course &#123;
+  id: number; title: string; instructor: string;
+  price: number; rating: number; reviews: number;
+  level: string; icon: string; tag: string;
+&#125;
+
+&#64;Injectable(&#123; providedIn: 'root' &#125;)
+export class SharedStateService &#123;
+  private state = new BehaviorSubject&lt;Course[]&gt;([]);
+  state$ = this.state.asObservable();
+
+  addCourse(course: Course) &#123;
+    if (!this.state.value.find(c => c.id === course.id))
+      this.state.next([...this.state.value, course]);
+  &#125;
+
+  removeCourse(id: number) &#123;
+    this.state.next(this.state.value.filter(c => c.id !== id));
+  &#125;
+&#125;</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Build &amp; publish</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">terminal</div>
+      <pre><code># Build
+ng build shared-state
+
+# Publish from dist output
+cd dist/shared-state
+npm publish --registry=https://npm.pkg.github.com</code></pre>
+    </div>
+
+    <h4 class="cmd-title">.npmrc — scope the package to GitHub Packages</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">.npmrc (in consuming apps)</div>
+      <pre><code>&#64;your-org:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=$&#123;NODE_AUTH_TOKEN&#125;</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Install in consuming apps</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">terminal (in shell / mfe-products / mfe-cart)</div>
+      <pre><code>npm install &#64;your-org/shared-state</code></pre>
+    </div>
+
+    <div class="note-box">
+      &#128161; <strong>Why publish?</strong> Path aliases pointing to local source only work on your machine.
+      Publishing to a registry means CI/CD pipelines and other developers can install the exact same
+      built version — reproducible and versioned.
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="guide-section" id="mf-config">
+    <div class="guide-section__header">
+      <span class="guide-section__num">03</span>
+      <h2>Module Federation Configuration</h2>
+    </div>
+
+    <div class="theory-box">
+      <h4>&#128218; Theory</h4>
+      <p>
+        Webpack Module Federation works through two roles — <strong>Host</strong> and <strong>Remote</strong>.
+        The Remote <em>exposes</em> modules (components, routes). The Host <em>consumes</em> those modules
+        at runtime by fetching the remote's <code>remoteEntry.js</code>. The Shell uses a
+        <strong>manifest</strong> (a JSON file) — to discover remote URLs dynamically, avoiding
+        hardcoded URLs in the build.
+      </p>
+    </div>
+
+    <h4 class="cmd-title">Shell webpack.config.js (Host)</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">webpack.config.js</div>
+      <pre><code>const &#123; shareAll, withModuleFederationPlugin &#125; = require('&#64;angular-architects/module-federation/webpack');
+
+module.exports = withModuleFederationPlugin(&#123;
+  shared: &#123;
+    ...shareAll(&#123; singleton: true, strictVersion: true, requiredVersion: 'auto' &#125;),
+    '&#64;your-org/shared-state': &#123; singleton: true, requiredVersion: 'auto' &#125;,
+  &#125;,
+&#125;);</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Remote webpack.config.js</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">webpack.config.js (mfe-products)</div>
+      <pre><code>module.exports = withModuleFederationPlugin(&#123;
+  name: 'mfe-products',
+  exposes: &#123;
+    './Component': './src/app/app.ts',
+  &#125;,
+  shared: &#123;
+    ...shareAll(&#123; singleton: true, strictVersion: true, requiredVersion: 'auto' &#125;),
+    '&#64;your-org/shared-state': &#123; singleton: true, requiredVersion: 'auto' &#125;,
+  &#125;,
+&#125;);</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Manifest files (dev vs prod)</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">module-federation.manifest.json (dev)</div>
+      <pre><code>&#123;
+  "mfe-products": "http://localhost:4201/remoteEntry.js",
+  "mfe-cart":     "http://localhost:4202/remoteEntry.js"
+&#125;</code></pre>
+    </div>
+    <div class="cmd-block">
+      <div class="cmd-block__label">module-federation.manifest.prod.json (production)</div>
+      <pre><code>&#123;
+  "mfe-products": "https://your-org.github.io/mfe-products/remoteEntry.js",
+  "mfe-cart":     "https://your-org.github.io/mfe-cart/remoteEntry.js"
+&#125;</code></pre>
+    </div>
+
+    <h4 class="cmd-title">main.ts — Load manifest before bootstrap</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">src/main.ts</div>
+      <pre><code>import &#123; loadManifest &#125; from '&#64;angular-architects/module-federation';
+import &#123; environment &#125; from './environments/environment';
+
+loadManifest(environment.manifestPath)
+  .catch(err => console.error(err))
+  .then(() => import('./bootstrap'))
+  .catch(err => console.error(err));</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Shell routing — lazy load remotes with fallback</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">demo.routes.ts</div>
+      <pre><code>import &#123; loadRemoteModule &#125; from '&#64;angular-architects/module-federation';
+import &#123; Fallback &#125; from '../fallback/fallback';
+
+&#123;
+  path: 'products',
+  loadComponent: () =>
+    loadRemoteModule(&#123;
+      type: 'manifest',
+      remoteName: 'mfe-products',
+      exposedModule: './Component',
+    &#125;).then(m => m.App).catch(() => Fallback),
+&#125;</code></pre>
+    </div>
+
+    <div class="note-box">
+      &#128161; <strong>Why manifest?</strong> Without a manifest, remote URLs are hardcoded in
+      <code>webpack.config.js</code> at build time. The manifest approach allows URLs to be changed
+      without rebuilding the Shell , making it environment-aware at runtime.
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="guide-section" id="state">
+    <div class="guide-section__header">
+      <span class="guide-section__num">04</span>
+      <h2>Shared State Between MFEs</h2>
+    </div>
+
+    <div class="theory-box">
+      <h4>&#128218; Theory</h4>
+      <p>
+        Cross-MFE state sharing requires a <strong>singleton service</strong> — one instance shared
+        across all remotes. This is achieved by: (1) having all apps import from the same npm package,
+        and (2) configuring the package as <code>singleton: true</code> in Webpack's shared scope.
+        Webpack then ensures only the highest compatible version is loaded once, and all remotes reuse it.
+      </p>
+    </div>
+
+    <h4 class="cmd-title">Writing state (MFE Products)</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">mfe-products — app.ts</div>
+      <pre><code>export class App implements OnInit &#123;
+  addedIds = signal(new Set&lt;number&gt;());
+
+  constructor(private sharedState: SharedStateService) &#123;&#125;
+
+  ngOnInit() &#123;
+    this.sharedState.state$.subscribe(
+      s => this.addedIds.set(new Set(s.map(c => c.id)))
+    );
+  &#125;
+
+  addToCart(course: Course) &#123;
+    this.sharedState.addCourse(course);
+  &#125;
+&#125;</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Reading state (MFE Cart)</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">mfe-cart — app.ts</div>
+      <pre><code>export class App implements OnInit &#123;
+  state = signal&lt;Course[]&gt;([]);
+  total = computed(() => this.state().reduce((sum, c) => sum + c.price, 0));
+
+  constructor(private sharedState: SharedStateService) &#123;&#125;
+
+  ngOnInit() &#123;
+    this.sharedState.state$.subscribe(s => this.state.set(s));
+  &#125;
+&#125;</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Cart badge in Shell</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">shell — app.ts</div>
+      <pre><code>ngOnInit() &#123;
+  this.sharedState.state$.subscribe(s => this.cartCount.set(s.length));
+&#125;</code></pre>
+    </div>
+
+    <div class="note-box">
+      &#128161; <strong>Why BehaviorSubject?</strong> It holds the latest value and immediately emits
+      to new subscribers  so a remote that loads late still gets the current state without waiting
+      for the next emission. A plain Subject would miss the value.
+    </div>
+  </section>
+
+  <!-- STEP 5 -->
+  <section class="guide-section" id="deploy">
+    <div class="guide-section__header">
+      <span class="guide-section__num">05</span>
+      <h2>Deployment — GitHub Actions + GitHub Pages</h2>
+    </div>
+
+    <div class="theory-box">
+      <h4>&#128218; Theory</h4>
+      <p>
+        Each MFE is deployed independently to its own GitHub Pages site. GitHub Actions triggers
+        a build on every push to master. The Shell's manifest is environment-aware , it points to
+        localhost during development and to the live GitHub Pages URLs in production, driven by
+        Angular's <code>fileReplacements</code> at build time.
+      </p>
+    </div>
+
+    <h4 class="cmd-title">GitHub Actions workflow (per MFE app)</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">.github/workflows/deploy.yml</div>
+      <pre><code>name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout&#64;v4
+      - uses: actions/setup-node&#64;v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '&#64;your-org'
+      - run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ '{{' }} secrets.PACKAGES_TOKEN {{ '}}' }}
+      - run: npm run build -- --base-href /shell/
+        env:
+          NODE_AUTH_TOKEN: ${{ '{{' }} secrets.PACKAGES_TOKEN {{ '}}' }}
+      - run: cp dist/shell/index.html dist/shell/404.html
+      - uses: peaceiris/actions-gh-pages&#64;v3
+        with:
+          github_token: ${{ '{{' }} secrets.GITHUB_TOKEN {{ '}}' }}
+          publish_dir: ./dist/shell</code></pre>
+    </div>
+
+    <h4 class="cmd-title">Shared library auto-publish workflow</h4>
+    <div class="cmd-block">
+      <div class="cmd-block__label">.github/workflows/publish.yml (key steps)</div>
+      <pre><code>- name: Bump patch version
+  run: npm version patch --no-git-tag-version
+  working-directory: projects/shared-state
+
+- name: Build library
+  run: npx ng build shared-state
+
+- name: Publish
+  run: cd dist/shared-state && npm publish
+  env:
+    NODE_AUTH_TOKEN: ${{ '{{' }} secrets.PACKAGES_TOKEN {{ '}}' }}</code></pre>
+    </div>
+
+    <div class="note-box">
+      &#128161; <strong>Why copy index.html to 404.html?</strong> GitHub Pages is a static file server.
+      When a user refreshes on a deep route like <code>/shell/products</code>, GitHub returns a 404.
+      By making <code>404.html</code> identical to <code>index.html</code>, the Angular app boots and
+      its router handles the URL correctly.
+    </div>
+  </section>
+
+  <!-- STEP 6 — Pitfalls -->
+  <section class="guide-section" id="pitfalls">
+    <div class="guide-section__header">
+      <span class="guide-section__num">06</span>
+      <h2>Common Pitfalls &amp; Fixes</h2>
+    </div>
+
+    <div class="pitfall-list">
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>"Shared module is not available for eager consumption"</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> Angular bootstraps eagerly in <code>main.ts</code> before Webpack can negotiate shared modules.</p>
+          <p><strong>Fix:</strong> Move all code to <code>bootstrap.ts</code> and use a dynamic import in <code>main.ts</code>:</p>
+          <pre><code>import('./bootstrap').catch(err => console.error(err));</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>Singleton service not shared — each MFE has its own instance</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> The shared library is not listed in the <code>shared</code> config, or <code>singleton: true</code> is missing.</p>
+          <p><strong>Fix:</strong> Add the library explicitly to every MFE's webpack config:</p>
+          <pre><code>'&#64;your-org/shared-state': &#123; singleton: true, requiredVersion: 'auto' &#125;</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>Backslash in <code>exposes</code> path on Windows</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> Windows uses backslashes and some tools auto-generate paths like <code>.\src\app\app.ts</code>.</p>
+          <p><strong>Fix:</strong> Always use forward slashes in <code>webpack.config.js</code>:</p>
+          <pre><code>exposes: &#123; './Component': './src/app/app.ts' &#125;</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>TypeScript <code>rootDir</code> error when using path aliases</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> A path alias points outside the project's <code>rootDir</code>, causing TS to reject it.</p>
+          <p><strong>Fix:</strong> Set <code>rootDir</code> to a parent directory in <code>tsconfig.app.json</code>:</p>
+          <pre><code>"rootDir": ".."</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>Cannot GET /assets/module-federation.manifest.json</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> Manifest placed in <code>src/assets/</code> but the path in <code>main.ts</code> doesn't match, or the file isn't in <code>public/</code>.</p>
+          <p><strong>Fix:</strong> Place manifest in <code>public/</code> and reference it via the environment path. Angular copies <code>public/</code> to the dist root automatically.</p>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>Routing breaks on page refresh (GitHub Pages)</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> GitHub Pages returns 404 for deep routes — there is no file at <code>/shell/products</code>.</p>
+          <p><strong>Fix:</strong> Copy <code>index.html</code> as <code>404.html</code> in the CI deploy step. GitHub Pages serves <code>404.html</code> on unknown paths, which boots Angular and lets its router handle the URL.</p>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>Version conflict — strictVersion error at runtime</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> Two remotes declare incompatible required versions of the same dependency.</p>
+          <p><strong>Fix:</strong> Use <code>requiredVersion: 'auto'</code> so Webpack reads the version from <code>package.json</code> automatically, or align versions across all apps. As a last resort use <code>strictVersion: false</code> to demote to a warning.</p>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>CORS error fetching remoteEntry.js</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> The remote is hosted on a different origin without CORS headers.</p>
+          <p><strong>Fix:</strong> Configure the remote server to return <code>Access-Control-Allow-Origin: *</code> (or the shell's specific origin). GitHub Pages allows cross-origin by default, so this mostly affects custom hosting.</p>
+        </div>
+      </div>
+
+      <div class="pitfall">
+        <div class="pitfall__head">
+          <span class="pitfall__icon">&#128679;</span>
+          <strong>npm publish 403 — Permission denied</strong>
+        </div>
+        <div class="pitfall__body">
+          <p><strong>Cause:</strong> The GitHub token used in CI doesn't have <code>write:packages</code> scope.</p>
+          <p><strong>Fix:</strong> Create a Personal Access Token (PAT) with <code>write:packages</code> scope, add it as a repository secret, and reference it as <code>NODE_AUTH_TOKEN</code> in the workflow.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- INTERVIEW Q&A -->
+  <section class="guide-section" id="interview">
+    <div class="guide-section__header">
+      <span class="guide-section__num">07</span>
+      <h2>Interview Q &amp; A</h2>
+    </div>
+
+    <div class="qa-list">
+
+      <div class="qa">
+        <div class="qa__q">What is Module Federation?</div>
+        <div class="qa__a">
+          Module Federation is a Webpack 5 feature that allows a JavaScript application to
+          dynamically load code from another application at runtime. It enables micro frontends
+          by letting a <strong>Host</strong> consume modules exposed by <strong>Remotes</strong>
+          without bundling them at build time.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is the difference between a Host and a Remote?</div>
+        <div class="qa__a">
+          A <strong>Host</strong> (Shell) consumes remote modules. It controls routing and the
+          top-level layout. A <strong>Remote</strong> exposes modules (components, routes) via a
+          <code>remoteEntry.js</code> file that the host fetches at runtime. A single app can be
+          both a host and a remote simultaneously.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is remoteEntry.js and what does it contain?</div>
+        <div class="qa__a">
+          <code>remoteEntry.js</code> is a small file generated by Webpack for each remote. It acts as a
+          registry — it declares what modules the remote exposes, what shared dependencies it provides,
+          and their versions. The host downloads this file first before loading any remote code.
+          It does <em>not</em> contain the full remote bundle.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">Why do we need bootstrap.ts in MFE?</div>
+        <div class="qa__a">
+          Webpack Module Federation needs to resolve all shared dependencies before any module executes.
+          By wrapping the Angular bootstrap in a dynamic <code>import('./bootstrap')</code> inside
+          <code>main.ts</code>, we give Webpack the chance to negotiate shared modules asynchronously
+          before Angular starts. Without this, you get the <em>"Shared module is not available for eager consumption"</em> error.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What does <code>singleton: true</code> do in the shared config?</div>
+        <div class="qa__a">
+          It tells Webpack to load only <strong>one instance</strong> of that package across all
+          micro frontends in the same browser session — even if multiple remotes declare it as a
+          dependency. This is critical for Angular (one zone.js, one injector) and for
+          shared state services (all MFEs share the same <code>BehaviorSubject</code> instance).
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is <code>strictVersion</code> and when would you turn it off?</div>
+        <div class="qa__a">
+          <code>strictVersion: true</code> causes Webpack to throw a runtime error if the version of
+          a shared dependency doesn't satisfy the required range — preventing silent version mismatches.
+          Turn it off (<code>false</code>) if you want a console warning instead of an error,
+          typically during incremental migration when remotes are temporarily on different versions.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">How does cross-MFE state sharing work without a global store like NgRx?</div>
+        <div class="qa__a">
+          By publishing a shared Angular library with a service using <code>providedIn: 'root'</code>
+          and configuring it as <code>singleton: true</code> in Webpack's shared scope.
+          All remotes inject the same service instance — changes in Products are immediately visible
+          in Shell's cart badge because they share the same <code>BehaviorSubject</code> in memory.
+          No NgRx needed for simple cross-MFE state.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is the difference between static and dynamic (manifest-based) remote loading?</div>
+        <div class="qa__a">
+          <strong>Static:</strong> Remote URLs are declared in <code>webpack.config.js</code> at build time.
+          Changing a remote URL requires rebuilding the host.<br><br>
+          <strong>Dynamic (manifest-based):</strong> The host fetches a JSON manifest at runtime to
+          discover remote URLs. No rebuild needed — just update the JSON file. This is the approach
+          used in this POC via <code>loadManifest()</code>.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">How do you handle a remote that fails to load?</div>
+        <div class="qa__a">
+          Use a <code>.catch()</code> on <code>loadRemoteModule()</code> and return a local fallback
+          component. This prevents the entire shell from crashing if one remote is down or not deployed:
+          <br><br>
+          <code>loadRemoteModule(...).then(m => m.App).catch(() => FallbackComponent)</code>
+          <br><br>
+          The fallback can show a meaningful message, a skeleton UI, or redirect the user gracefully.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">Why does Angular routing break on page refresh in GitHub Pages?</div>
+        <div class="qa__a">
+          GitHub Pages is a static file server. When you refresh on a route like <code>/shell/products</code>,
+          the server looks for a file at that path, finds nothing, and returns a 404. The fix is to
+          copy <code>index.html</code> as <code>404.html</code> in the CI deploy step — GitHub Pages
+          serves <code>404.html</code> on any 404, the Angular app boots, and its router handles the path.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is the purpose of <code>--base-href</code> in the build?</div>
+        <div class="qa__a">
+          <code>--base-href /shell/</code> sets the HTML <code>&lt;base href&gt;</code> tag, which tells
+          Angular's router and the browser where to find static assets. On GitHub Pages, apps are
+          served under a sub-path (e.g. <code>/shell/</code>)  without this flag, the router breaks
+          and assets 404 because they are requested from the root path.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">How do you share a library across separate Angular projects without a monorepo?</div>
+        <div class="qa__a">
+          Build the library using <code>ng-packagr</code> and publish it to a package registry
+          (npm, GitHub Packages etc.). Each consuming app installs it as a regular npm dependency.
+          For local development, use TypeScript path aliases pointing to the library source.
+          For production, all apps pull the same versioned release from the registry.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">How does Angular's environment file substitution work?</div>
+        <div class="qa__a">
+          In <code>angular.json</code>, under the <code>production</code> configuration, a
+          <code>fileReplacements</code> array maps <code>environment.ts</code> to
+          <code>environment.prod.ts</code>. When <code>ng build</code> runs (defaults to production),
+          every import of <code>environment.ts</code> is transparently replaced with
+          <code>environment.prod.ts</code>  no code changes needed.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">Can MFEs use different Angular versions?</div>
+        <div class="qa__a">
+          Technically yes, but it is complex. If versions are too different, the singleton constraint
+          may be violated and Angular will load multiple copies, breaking DI and zone.js.
+          The safest approach is to keep all MFEs on the same major Angular version.
+          For truly different frameworks (e.g. one React, one Angular), Module Federation supports
+          it but you lose singleton Angular benefits.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">How do you communicate between two remotes without going through the Shell?</div>
+        <div class="qa__a">
+          Via the <strong>shared singleton service</strong> from the shared library — both remotes
+          inject it directly. They do not need to route messages through the shell.
+          Alternative patterns include: a shared event bus (using RxJS Subject in the shared lib),
+          browser Custom Events, or a shared URL/query-param convention for loose coupling.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">How do you navigate from inside a remote to a Shell route without a full reload?</div>
+        <div class="qa__a">
+          Since Angular is a singleton in the shared scope, the Shell's <code>Router</code> instance
+          is available to all remotes. Inject <code>Router</code> in the remote component and call
+          <code>this.router.navigate(['/shell-route'])</code>. This triggers Angular's client-side
+          navigation — no page reload. <code>window.location.href</code> must be avoided as it
+          causes a full browser reload.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What are the main challenges of Micro Frontend architecture?</div>
+        <div class="qa__a">
+          <strong>1. Bundle size:</strong> Shared dependencies like Angular can be duplicated if misconfigured.<br>
+          <strong>2. Version mismatches:</strong> Remotes on different Angular versions may break the shared scope.<br>
+          <strong>3. Routing conflicts:</strong> Deep linking across remotes needs careful coordination.<br>
+          <strong>4. Deployment coordination:</strong> Breaking changes in a shared library require updating all consumers.<br>
+          <strong>5. Testing complexity:</strong> Integration testing across independently deployed apps is harder.<br>
+          <strong>6. Operational overhead:</strong> Each MFE needs its own CI/CD pipeline, monitoring, and deploy strategy.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is <code>requiredVersion: 'auto'</code>?</div>
+        <div class="qa__a">
+          It tells the Module Federation plugin to automatically read the required version of a
+          shared dependency from the app's <code>package.json</code> at build time  so you don't
+          have to hardcode version strings. This reduces maintenance overhead and prevents version
+          drift between what's declared in the config and what's actually installed.
+        </div>
+      </div>
+
+      <div class="qa">
+        <div class="qa__q">What is <code>shareAll()</code> and should you always use it?</div>
+        <div class="qa__a">
+          <code>shareAll()</code> is a helper that automatically shares every dependency listed in
+          <code>package.json</code> as a singleton. It is convenient for getting started but
+          shares more than necessary. In production, prefer explicitly listing only the packages
+          that need to be shared (Angular, RxJS, your shared lib) to keep the shared scope clean
+          and predictable.
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
