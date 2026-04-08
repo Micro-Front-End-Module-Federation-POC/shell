@@ -14,7 +14,7 @@
     "module": "preserve",
     "paths": {
       "@mfe/shared-state": [
-        "../shared-state-lib/projects/shared-state/src/public-api.ts"
+        "./node_modules/@micro-front-end-module-federation-poc/shared-state"
       ]
     }
   },
