@@ -15,6 +15,8 @@
   padding: 28px 32px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+
+  @media (max-width: 700px) { padding: 20px 16px; }
 }
 
 .demo__badge {
@@ -157,6 +159,10 @@
   padding: 8px 8px 0;
   border: 1px solid #eaedf3;
   border-bottom: none;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
 
 .demo__tab {
@@ -174,6 +180,8 @@
   transition: background 0.2s, color 0.2s;
   position: relative;
   bottom: -1px;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover {
     background: #f4f6f9;

@@ -6,24 +6,31 @@
       <span class="navbar__title">MFE Shop</span>
     </div>
 
-    <nav class="navbar__nav">
+    <nav class="navbar__nav" [class.navbar__nav--open]="menuOpen()">
       <a routerLink="/" routerLinkActive="navbar__link--active" [routerLinkActiveOptions]="{exact:true}"
-        class="navbar__link">
+        class="navbar__link" (click)="closeMenu()">
         <span class="navbar__link-icon">&#127968;</span> Home
       </a>
-      <a routerLink="/how-to-implement" routerLinkActive="navbar__link--active" class="navbar__link">
+      <a routerLink="/how-to-implement" routerLinkActive="navbar__link--active" class="navbar__link" (click)="closeMenu()">
         <span class="navbar__link-icon">&#128214;</span> How to Implement
       </a>
-      <a routerLink="/demo" routerLinkActive="navbar__link--active" class="navbar__link">
+      <a routerLink="/demo" routerLinkActive="navbar__link--active" class="navbar__link" (click)="closeMenu()">
         <span class="navbar__link-icon">&#127981;</span> View Demo
       </a>
     </nav>
 
-    <div class="navbar__cart">
+    <div class="navbar__right">
       <a routerLink="/demo/cart" class="cart-badge" title="Go to Cart">
         &#128722;
         <span class="cart-badge__count">{{ sharedStateValue() ?? 0 }}</span>
       </a>
+      <button class="navbar__hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+        @if (menuOpen()) {
+          <span>&#10005;</span>
+        } @else {
+          <span>&#9776;</span>
+        }
+      </button>
     </div>
   </header>
 
