@@ -1,0 +1,23 @@
+:host {
+    border-color: red;
+    border-width: 2px;
+    border-style: solid;
+    display: block;
+    color: red;
+}
+
+.display-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    justify-items: center;
+}
+
+a {
+    margin: 10px;
+    text-decoration: none;
+    color: blue;
+    font-size: 18px;
+}
