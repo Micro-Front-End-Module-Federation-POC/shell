@@ -12,11 +12,6 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve",
-    "paths": {
-      "@mfe/shared-state": [
-        "./node_modules/@micro-front-end-module-federation-poc/shared-state"
-      ]
-    }
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

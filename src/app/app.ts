@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { AppState, SharedStateService } from '@mfe/shared-state';
+import { AppState, SharedStateService } from '@micro-front-end-module-federation-poc/shared-state';
 
 @Component({
   selector: 'app-root',
