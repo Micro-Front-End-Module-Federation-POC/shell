@@ -1,0 +1,4 @@
+{
+  "mfe-products": "https://micro-front-end-module-federation-poc.github.io/mfe-products/remoteEntry.js",
+  "mfe-cart": "https://micro-front-end-module-federation-poc.github.io/mfe-cart/remoteEntry.js"
+}
